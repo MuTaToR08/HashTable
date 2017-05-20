@@ -3,6 +3,7 @@
 
 #include "node.h"
 #include "Hashable.h"
+#include "LinkedList.h"
 
 template <class DATA>
 class Table
@@ -10,11 +11,10 @@ class Table
 protected:
 	int size; //общий размер
 	int count;//текущее число записей
-	int p; // смещение
-	Node<DATA>* mas; // данные
+	LinkedList<Node<DATA>>* mas; // данные
 	int Hash(Hashable& K);
 public:
-Table(int size_ = 1,int p_ =11); // конструктор
+Table(int size_ = 1); // конструктор
 Table(Table& ht);
 ~Table();
 Node<DATA>& operator[](Hashable& k_);
@@ -31,7 +31,7 @@ void resize(size_t size)
 			last_used = i;
 	if (size < i)
 		throw 200;
-	Node<DATA>* tmp = new Node<DATA>[size];
+	LinkedList<Node<DATA>>* tmp = new LinkedList<Node<DATA>>[size];
 	for (int i = 0; i < size; i++)
 		tmp[i] = mas[i];
 
@@ -41,12 +41,11 @@ void resize(size_t size)
 };
 
 template <class DATA>
-Table<DATA>::Table(int size_, int p_)
+Table<DATA>::Table(int size_)
 {
 	size = size_;
 	count = 0;
-	p = p_;
-	mas = new Node<DATA>[size];
+	mas = new LinkedList<Node<DATA>>[size];
 }
 
 template <class DATA>
@@ -54,8 +53,7 @@ Table<DATA>::Table(Table& ht)
 {
 	size=ht.size;
 	count=ht.count;
-	p=ht.p;
-	mas=new Node<DATA>[ht.size];
+	mas=new LinkedList<Node<DATA>>[ht.size];
 	for(int i=0; i<ht.size;++i)
 		mas[i]=ht.mas[i];
 
@@ -80,14 +78,19 @@ Node<DATA>& Table<DATA>::operator[](Hashable& K)
 {
 	int index=Hash(K);
 	int HashIndex=index;
-	do
-	{
+	
+	try {
+		LinkedNode<Node<DATA>> *list = mas[index].getStart();
+		do {
+			
+			if (list->data.GetKey() == K)
+				return list->data;
+			list = list->next;
 		
-	if(mas[index].GetKey()==K)
-		return mas[index];
-	else
-		index+=p;
-	} while (index != HashIndex);
+		} while (!mas[index].isEnd(list));
+	}
+	catch (int e)
+	{}
 	throw 2222;
 }
 
@@ -99,7 +102,7 @@ Table<DATA>& Table<DATA>::operator=(Table<DATA> & ht)
 	p = ht.p;
 	if (mas != 0)
 		delete[] mas;
-	mas = new Node<DATA>[ht.size];
+	mas = new LinkedNode<Node<DATA>>[ht.size];
 	for (int i = 0; i<ht.size; ++i)
 		mas[i] = ht.mas[i];
 	return *this;
@@ -109,44 +112,31 @@ template <class DATA>
 void Table<DATA>::Add(DATA val_, Hashable& k_)
 {
 	int index=Hash(k_);
-	int HashIndex=index;
-	do
-	{
-		
-	if(mas[index].isused==false || (mas[index].isused == true && k_ == mas[index].GetKey()))
-	{
-		mas[index].SetKey(k_);
-		mas[index].SetVal(val_);
-		mas[index].isused = true;
-		return;
-
+	Node<DATA> tmp(k_,val_);
+	
+	try {
+		Node<DATA>* find=mas[index].get(tmp);
+		find->SetVal(val_);
 	}
-	else
-		index+=p;
-	} while (index != HashIndex);
-
+	catch (int e) {
+		mas[index].add(tmp);
+	}
+	
 }
 
 template<class DATA>
 void Table<DATA>::Del(Hashable& k_)
 {
-	 int index = Hash(K);
-	 int HashIndex = index;
-	 do
-	 {
+	int index = Hash(k_);
+	Node<DATA> tmp(k_);
 
-		 if (mas[index].GetKey() == k_)
-		 {
-			 mas[index].SetKey(k_);
-			 mas[index].SetVal(val_);
-			 mas[index].isused = false;
-			 return;
-
-		 }
-		 else
-			 index += p;
-	 } while (index != HashIndex)
-
+	try {
+		int find = mas[index].indexOf(tmp);
+		if (find >= 0)
+			mas[index].remove(find);
+	}
+	catch (int e) {
+	}
 }
 
 

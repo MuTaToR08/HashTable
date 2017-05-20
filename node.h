@@ -10,6 +10,21 @@ protected:
 	Cloneble* k;
 	DATA val;
 public:
+	Node(Cloneble& key, DATA v)
+	{
+		SetKey(key);
+		SetVal(v);
+	}
+	Node(Cloneble& key)
+	{
+		SetKey(key);
+	}
+	Node()
+	{}
+	bool operator==(Node r)
+	{
+		return *k == (*r.k);
+	}
 	Cloneble& GetKey();
 	DATA GetData();
 	void SetKey(Cloneble& k_);
